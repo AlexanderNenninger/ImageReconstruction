@@ -1,5 +1,7 @@
 import numpy as np
 from skimage.transform import radon, iradon
+
+from copy import deepcopy
 '''
 Define Operators. mOp is for taking measurements, CovOp is for mapping to the right function space. 
 '''
@@ -16,7 +18,6 @@ class mOp(object):
         self.sigma = sigma
         self.mean = mean
         self.F = np.zeros(self.shape)
-        self.update_tensor()
 
     def __call__(self, x):
         if self.ndim == 0:
@@ -44,6 +45,9 @@ class CovOp(object):
     def f(self, r):
         return np.exp(-r/self.ro)#(1 + np.sqrt(3)*r / self.ro) * np.exp(-np.sqrt(3) * r / self.ro)
     
+    def dist(self, x,y):
+        return np.sum((x-y)**2)
+    
     def __init__(self, ndim, size, sigma=1, ro=1):
         self.tensor_cached = False
         self.inverse_cached = False
@@ -54,10 +58,10 @@ class CovOp(object):
         self.Inv = np.zeros(self.shape)
         self.ro = ro * size
         self.sigma = sigma      
-        self.update_tensor()
-        self.update_inverse()
 	
     def __call__(self, x):
+        if not self.tensor_cached:
+            self.update_tensor
         if self.ndim == 0:
             return self.sigma * self.C * x
         elif self.ndim == 1:
@@ -68,7 +72,7 @@ class CovOp(object):
         it = np.nditer(self.C, flags=['multi_index'], op_flags=['readwrite'])
         while not it.finished:
             idx = np.array(it.multi_index)
-            d = np.linalg.norm(idx[:idx.shape[0]//2] - idx[idx.shape[0]//2:])
+            d = self.dist(idx[:idx.shape[0]//2], idx[idx.shape[0]//2:])
             it[0] = self.f(d)
             it.iternext()
         self.tensor_cached = True
@@ -89,6 +93,36 @@ class CovOp(object):
         elif self.ndim == 1:
             return np.dot(self.Inv, x) / self.sigma
         return np.tensordot(self.Inv, x) / self.sigma
+    
+    def set_f(self ,f):
+        self.inverse_cached = False
+        self.tensor_cached = False
+        self.f = f
+        
+    def set_dist(self, dist):
+        self.inverse_cached = False
+        self.tensor_cached = False
+        self.dist = dist
+        
+class DGP(object):
+    def __init__(self, CovOp, F, depth):
+        self.depth = depth
+        self.CovOp = CovOp
+        self.C = deepcopy(self.CovOp)
+        self.F = F
+        self.sigma = CovOp.sigma
+        self.u = []
+    def sample(self, xi):
+        self.u = []
+        self.u.append(self.CovOp(xi[0]))
+        for i in range(1, self.depth):
+            Sigma = self.F(self.u[i-1])
+            Q = lambda x,y: np.sqrt(np.inner(x-y, 2*(x-y)/(Sigma[tuple(x)] + Sigma[tuple(y)])))
+            self.C.set_dist(Q)
+            self.C.update_tensor()
+            self.C.sigma = self.CovOp.sigma/self.C.C.ravel()[0]
+            self.u.append(self.C(xi[i]))
+        return self.u[-1]
 
 
 class mDevice(object):
@@ -114,17 +148,22 @@ class RadonTransform(object):
 
 if __name__=='__main__':
     import matplotlib.pyplot as plt
-    size = 50
-    ndim = 1
+    size = 40
+    ndim = 2
+    depth = 3
+        
+    F = lambda x: np.exp(x)
     
-    xi = np.random.standard_normal((size,)*ndim)
-    
-    C = CovOp(ndim, size, xi, .1)    
-    u = C(xi)
+    Cov = CovOp(ndim, size, 1, .2)
+    Cov.update_tensor()
+    dgp = DGP(Cov, F, depth)   
 
-    print(T(u))
-    fig, ax = plt.subplots(2)
-    ax[0].plot(xi)
-    ax[1].plot(u)
+    xi = [np.random.standard_normal((size,)*ndim) for i in range(depth)] 
+    samples = dgp.sample(xi)
+
+    fig, ax = plt.subplots(ncols = depth)
+    for i, s in enumerate(samples):
+        im = ax[i].imshow(s)
+    #fig.colorbar(im)
     plt.show()
     
