@@ -78,7 +78,7 @@ def plot_result_2d(image, chain, savefig=False):
     
     for i, d in enumerate(data.T):
         ax[3].plot(d, label = '%s°'%int(theta[i]))
-    ax[3].legend(loc='upper right')
+    ax[3].legend(loc='upper right', fontsize='xx-small')
     ax[3].set_title('Data (Sinogram)', fontsize = title_fontsize)
 
     im = ax[4].imshow(chain.samples[-1])
@@ -139,7 +139,7 @@ def plot_result_2d(image, chain, savefig=False):
     return fig
 
 if __name__=='__main__':
-    f_path = Path('chains\\2019-07-29T08-13-20_n30000.pkl')
+    f_path = Path('chains\\2019-07-29T11-54-19_n50000.pkl')
     with open(f_path, 'rb') as f:
         chain = pickle.load(f)
 

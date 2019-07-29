@@ -128,7 +128,7 @@ if __name__=='__main__':
 
 
 	image_path = Path('data/phantom.png')
-	size = 20
+	size = 32
 	image = dataLoading.import_image(image_path, size=size)
 
 	ndim = image.ndim
@@ -136,7 +136,7 @@ if __name__=='__main__':
 
 	C = CovOp(ndim, size, sigma=.2, ro=.1)
 
-	T = RadonTransform(ndim, size, np.linspace(0, 180, 5))
+	T = RadonTransform(ndim, size, np.linspace(0, 180, 10))
 
 	noise = .1
 	
@@ -147,7 +147,7 @@ if __name__=='__main__':
 
 	chain = wpCN(ndim, size, noise, C, T)
 
-	n_iter = 30000
+	n_iter = 50000
 	chain.sample(data, n_iter)
 
 	f_name = '%s_n%s.pkl'%(datetime.now().replace(microsecond=0).isoformat().replace(':','-'),str(n_iter))
