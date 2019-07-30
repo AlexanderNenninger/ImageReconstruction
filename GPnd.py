@@ -136,7 +136,7 @@ if __name__=='__main__':
 
 	C = CovOp(ndim, size, sigma=.2, ro=.1)
 
-	T = RadonTransform(ndim, size, np.linspace(0, 180, 10))
+	T = RadonTransform(ndim, size, np.linspace(0, 180, 20))
 
 	noise = .1
 	

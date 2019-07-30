@@ -27,7 +27,7 @@ def plot_result_2d(image, chain, savefig=False):
     data += chain.noise * np.random.standard_normal(data.shape)
     fbp = T.inv(data)
     theta = T.theta
-    
+
     description = 'Size: %s, Depth: %s, #Samples: %s, Computation Time: %ss'%(size, chain.depth, len(chain.samples), int(chain.t_delta))
     if savefig:
         plt.switch_backend('pdf')
