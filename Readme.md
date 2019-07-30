@@ -3,12 +3,14 @@
 ## Install
 
 1. Have Python 3.7
-2. ``pip install virtualenv``
-3. ``virtualenv env``
-4. Activate the environment (System dependent; on Windows execute ``env\Scripts\activate.bat``)
-5. ``pip install -r requirements.txt``
-6. ``python GPnd.py``
-7. Enjoy report
+2. Open a commad promt.
+3. Navigate to the directroy, You want this project to reside in.
+4. ``pip install virtualenv``
+5. ``virtualenv env``
+6. Activate the environment (System dependent; on Windows execute ``env\Scripts\activate.bat``)
+7. ``pip install -r requirements.txt``
+8. ``python GPnd.py``
+9. Enjoy report
 
 ## Structure
 
