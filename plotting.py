@@ -32,6 +32,8 @@ def plot_result_2d(image, chain, savefig=False):
     if savefig:
         plt.switch_backend('pdf')
     title_fontsize = 'x-small'
+    
+    #Layout
     fig = plt.figure(dpi=300, tight_layout=True)
     fig.set_size_inches(8.27, 11.69, forward=True)
     
@@ -52,42 +54,46 @@ def plot_result_2d(image, chain, savefig=False):
     ax[10] = fig.add_subplot(gs[4, 1])
     ax[11] = fig.add_subplot(gs[4, 2])
 
+    #Truth
     im = ax[0].imshow(image)
     ax[0].set_title('Truth', fontsize = title_fontsize)
-    
     divider = make_axes_locatable(ax[0])
     cax = divider.append_axes("right", size="5%", pad=0.05)
     cbar = fig.colorbar(im, cax=cax)
     cbar.ax.tick_params(labelsize='xx-small')
 
+    #MCMC Reconstruction
     im = ax[1].imshow(chain.reconstruction)
     ax[1].set_title('MCMC Reconstruction (Sample Mean)', fontsize = title_fontsize)
-
     divider = make_axes_locatable(ax[1])
     cax = divider.append_axes("right", size="5%", pad=0.05)
     cbar = fig.colorbar(im, cax=cax)
     cbar.ax.tick_params(labelsize='xx-small')
-    
+
+    #FBP Reconstruction
     im = ax[2].imshow(fbp)
     ax[2].set_title('FBP Reconstruction', fontsize = title_fontsize)
-
     divider = make_axes_locatable(ax[2])
     cax = divider.append_axes("right", size="5%", pad=0.05)
     cbar = fig.colorbar(im, cax=cax)
     cbar.ax.tick_params(labelsize='xx-small')
     
+    #Data
     for i, d in enumerate(data.T):
         ax[3].plot(d, label = '%s°'%int(theta[i]))
     ax[3].legend(loc='upper right', fontsize='xx-small')
     ax[3].set_title('Data (Sinogram)', fontsize = title_fontsize)
 
-    im = ax[4].imshow(chain.samples[-1])
-    ax[4].set_title('Last Sample', fontsize = title_fontsize)
+    #Maximum Acceptance Pobability
+    u, err = MAP_Estimator(chain, image)
+    im = ax[4].imshow(u)
+    ax[4].set_title('MAP sample, phi=%s'%err, fontsize = title_fontsize)
     divider = make_axes_locatable(ax[4])
     cax = divider.append_axes("right", size="5%", pad=0.05)
     cbar = fig.colorbar(im, cax=cax)
     cbar.ax.tick_params(labelsize='xx-small')
 
+    #Chain Variance
     im = ax[5].imshow(chain.var)
     ax[5].set_title('MCMC Sample Variance', fontsize = title_fontsize)
     divider = make_axes_locatable(ax[5])
@@ -95,6 +101,7 @@ def plot_result_2d(image, chain, savefig=False):
     cbar = fig.colorbar(im, cax=cax)
     cbar.ax.tick_params(labelsize='xx-small')
 
+    #Spatial Error
     im = ax[6].imshow(np.abs(chain.reconstruction-image))
     ax[6].set_title('Reconstruction Error', fontsize = title_fontsize)
     divider = make_axes_locatable(ax[6])
@@ -102,14 +109,17 @@ def plot_result_2d(image, chain, savefig=False):
     cbar = fig.colorbar(im, cax=cax)
     cbar.ax.tick_params(labelsize='xx-small')
 
+    # Random Projection
     v = np.random.standard_normal(chain.shape)
     v /= np.linalg.norm(v)/np.prod(chain.shape)
     ax[7].plot([np.tensordot(s, v)/np.prod(chain.shape) for s in chain.samples])
     ax[7].set_title('Projection of Chain onto a Random Unit-Vector', fontsize = title_fontsize)
     
+    # Step Size
     ax[8].plot(chain.betas)
     ax[8].set_title('Jump Size', fontsize = title_fontsize)
 
+    #Operator Slices
     im = ax[9].imshow(C.C[0,0], norm=colors.LogNorm(vmin=C.C[0,0].min(), vmax=C.C[0,0].max()))
     ax[9].set_title('Covariance Operator, i=1, j=1', fontsize = title_fontsize)
     divider = make_axes_locatable(ax[9])
@@ -138,8 +148,15 @@ def plot_result_2d(image, chain, savefig=False):
             tick.label.set_fontsize('xx-small')   
     return fig
 
+def MAP_Estimator(chain, image):
+    T  = chain.T
+    data = T(image)
+    y_hat = [T(u) for u in chain.samples]
+    errs = [chain.phi(y,data) for y in y_hat]
+    return chain.samples[np.argmin(errs)], np.round(np.min(errs), 4)
+
 if __name__=='__main__':
-    f_path = Path('chains\\2019-07-29T11-54-19_n50000.pkl')
+    f_path = Path('chains\\2019-07-29T08-13-20_n30000.pkl')
     with open(f_path, 'rb') as f:
         chain = pickle.load(f)
 
