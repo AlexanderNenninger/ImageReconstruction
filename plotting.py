@@ -81,7 +81,8 @@ def plot_result_2d(image, chain, savefig=False):
     #Data
     for i, d in enumerate(data.T):
         ax[3].plot(d, label = '%s°'%int(theta[i]))
-    ax[3].legend(loc='upper right', fontsize='xx-small')
+    if len(data.T) <=10:
+        ax[3].legend(loc='upper right', fontsize='xx-small')
     ax[3].set_title('Data (Sinogram)', fontsize = title_fontsize)
 
     #Maximum Acceptance Pobability

@@ -16,7 +16,7 @@
 
 1. ``GPnd.py`` is the main script. Here the class ``wpCN`` runs the markov chain. Currently, the assumed Gaussian noise is a multiple of the identity.
 
-2. Operators provides the classes for the covariance operator, the forward operator and the *deep Gaussian process*.
+2. ``utils/operators.py`` provides the classes for the covariance operator, the forward operator and the *deep Gaussian process*.
 3. ``plotting.py`` produces a report from a pickled wpCN object and stores it in results.
 
 ![Example Report][report]

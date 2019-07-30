@@ -2,7 +2,7 @@
 This is the NICE code accompanying my bachelor's thesis. I was able to cut out a lot of unnecessary stuff.
 Ideas:
     1. Adapt beta based on acceptance probability every 100 iterations - Done
-    2. Adapt the length scale parameters during the iteration, maybe for the first 10,000 iterations, then fix or reduce update rate
+    2. Adapt the length scale parameters during the iteration, maybe for the first 10,000 iterations, then fix or reduce update rate - Scrapped DGPs all the way
     3. Implement more layers, but I need a powerful server for that and need to switch to an ONB representation of the function space
     4. Performance Metrics - Need to decide with Tim which ones he wants to see
 
@@ -14,8 +14,7 @@ Next Steps:
     
 After Thesis (maybe): 
     1. Implement different Priors - Besov is an option!; Might need to switch to basis representations of the space then.
-    2. Write performance critical components in C++/C
-    3. Optimize regularization parameter
+    2. Use Sparse tensors
     4. Use a coarser tiling for deeper layers
 '''
 import copy
@@ -101,14 +100,14 @@ class wpCN(object):
 			self.betas.append(self.beta)
 			# Kill chain if beta leaves a sensible region
 			if i%100==0:
-				if self.beta < 0.05:
+				if self.beta < 0.005:
 					self.Temperature /= 2
 					self.samples = []
 					self.betas = []
 					self.beta = .5
 					print('Temperature decreased to: ', self.Temperature)
 					i = 0
-				if self.beta > 0.95:
+				if self.beta > 0.995:
 					self.Temperature *= 2
 					self.samples = []
 					self.betas = []
@@ -128,17 +127,17 @@ if __name__=='__main__':
 
 
 	image_path = Path('data/phantom.png')
-	size = 50
+	size = 48
 	image = dataLoading.import_image(image_path, size=size)
 
 	ndim = image.ndim
 	shape = (size,)*ndim
 
-	C = CovOp(ndim, size, sigma=.2, ro=.1)
+	C = CovOp(ndim, size, sigma=.1, ro=.01)
 
-	T = RadonTransform(ndim, size, np.linspace(0, 90, 5))
+	T = RadonTransform(ndim, size, np.linspace(0, 180, 40))
 
-	noise = .1
+	noise = .005
 	
 	data = T(image)
 	data += noise * np.random.standard_normal(data.shape)
@@ -147,7 +146,7 @@ if __name__=='__main__':
 
 	chain = wpCN(ndim, size, noise, C, T)
 
-	n_iter = 100000
+	n_iter = 200000
 	chain.sample(data, n_iter)
 
 	f_name = '%s_n%s.pkl'%(datetime.now().replace(microsecond=0).isoformat().replace(':','-'),str(n_iter))
