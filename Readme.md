@@ -18,3 +18,7 @@
 
 2. Operators provides the classes for the covariance operator, the forward operator and the *deep Gaussian process*.
 3. ``plotting.py`` produces a report from a pickled wpCN object and stores it in results.
+
+![Example Report][report]
+
+[report]: https://github.com/AlexanderNenninger/wpCN_Image_Reconstruction/blob/master/results/results_2019-07-29T08-13-20_n30000.pdf
