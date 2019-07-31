@@ -53,7 +53,7 @@ class CovOp(object):
         self.inverse_cached = False
         self.ndim = ndim
         self.size = size
-        self.shape = (size,)*2**ndim
+        self.shape = (size,)*ndim*2
         self.C = np.zeros(self.shape)
         self.Inv = np.zeros(self.shape)
         self.ro = ro * size
@@ -66,7 +66,7 @@ class CovOp(object):
             return self.sigma * self.C * x
         elif self.ndim == 1:
             return self.sigma * np.dot(self.C, x)
-        return self.sigma * np.tensordot(self.C, x)
+        return self.sigma * np.tensordot(self.C, x, axes=self.ndim)
     
     def update_tensor(self):
         it = np.nditer(self.C, flags=['multi_index'], op_flags=['readwrite'])
@@ -148,18 +148,21 @@ class RadonTransform(object):
 
 if __name__=='__main__':
     import matplotlib.pyplot as plt
-    size = 40
-    ndim = 2
+    size = 3
+    ndim = 1
     depth = 3
         
     F = lambda x: np.exp(x)
     
     Cov = CovOp(ndim, size, 1, .2)
     Cov.update_tensor()
-    dgp = DGP(Cov, F, depth)   
+    # dgp = DGP(Cov, F, depth)   
 
-    xi = [np.random.standard_normal((size,)*ndim) for i in range(depth)] 
-    samples = dgp.sample(xi)
+    # xi = [np.random.standard_normal((size,)*ndim) for i in range(depth)] 
+    # samples = dgp.sample(xi)
+
+    xi = np.random.standard_normal((size,)*ndim)
+    u = Cov(xi)
 
     fig, ax = plt.subplots(ncols = depth)
     for i, s in enumerate(samples):
