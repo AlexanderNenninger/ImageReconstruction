@@ -146,7 +146,7 @@ if __name__=='__main__':
 
 	chain = wpCN(ndim, size, noise, C, T)
 
-	n_iter = 200000
+	n_iter = 500000
 	chain.sample(data, n_iter)
 
 	f_name = '%s_n%s.pkl'%(datetime.now().replace(microsecond=0).isoformat().replace(':','-'),str(n_iter))
