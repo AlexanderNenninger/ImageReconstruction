@@ -157,7 +157,7 @@ def MAP_Estimator(chain, image):
     return chain.samples[np.argmin(errs)], np.round(np.min(errs), 4)
 
 if __name__=='__main__':
-    f_path = Path('chains\\2019-07-30T12-29-53_n50000.pkl')
+    f_path = Path('chains/2019-07-30T12-29-53_n50000.pkl')
     with open(f_path, 'rb') as f:
         chain = pickle.load(f)
 
@@ -166,4 +166,4 @@ if __name__=='__main__':
 
     fig = plot_result_2d(image, chain, savefig=True)
     fig_name = 'results_%s.pdf'%f_path.name.replace('.pkl','')
-    plt.savefig('results\\'+fig_name, papertype='a4', orientation='portrait', dpi=300)
+    plt.savefig('results/'+fig_name, papertype='a4', orientation='portrait', dpi=300)
