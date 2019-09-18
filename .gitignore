@@ -110,6 +110,7 @@ test_*
 activate.bat
 deactivate.bat
 
+chains/*
 
 .vscode
 
