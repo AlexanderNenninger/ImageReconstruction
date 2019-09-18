@@ -125,7 +125,7 @@ class wpCN(object):
 if __name__=='__main__':	
 
 	image_path = Path('data/phantom.png')
-	size = 48
+	size = 10
 	image = dataLoading.import_image(image_path, size=size)
 
 	ndim = image.ndim
@@ -133,7 +133,7 @@ if __name__=='__main__':
 
 	C = CovOp(ndim, size, sigma=.1, ro=.05)
 
-	T = RadonTransform(ndim, size, np.linspace(0, 180, 5))
+	T = RadonTransform(ndim, size, np.linspace(0, 180, 10))
 
 	noise = .01
 	
@@ -144,11 +144,11 @@ if __name__=='__main__':
 
 	chain = wpCN(ndim, size, noise, C, T)
 
-	n_iter = 30000
+	n_iter = 100000
 	chain.sample(data, n_iter)
 
 	f_name = '%s_n%s.pkl'%(datetime.now().replace(microsecond=0).isoformat().replace(':','-'),str(n_iter))
-	with open('chains\\' + f_name, 'wb') as f:
+	with open('chains/' + f_name, 'wb') as f:
 		pickle.dump(chain, f)
 
 	fig = plotting.plot_result_2d(image, chain, savefig=True)

@@ -107,8 +107,6 @@ env
 test_*
 .gitignore
 
-chains/*
-
 activate.bat
 deactivate.bat
 
