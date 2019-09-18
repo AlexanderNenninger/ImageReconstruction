@@ -9,6 +9,9 @@ import matplotlib.gridspec as gridspec
 import matplotlib.colors as colors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+#animations
+from matplotlib import animation
+
 import numpy as np
 from skimage.io import imread
 
@@ -156,14 +159,43 @@ def MAP_Estimator(chain, image):
     errs = [chain.phi(y,data) for y in y_hat]
     return chain.samples[np.argmin(errs)], np.round(np.min(errs), 4)
 
+def animate_chain(chain, savefig=False):
+    #setup the figure and axes
+    fig = plt.figure()
+    ax = plt.axes(xlim=(-.5, chain.size-.5), ylim=(-.5, chain.size-.5))
+    img = ax.imshow(chain.samples[0])
+    
+    def _init():
+        img.set_data(chain.samples[0])
+        return img,
+    
+    def _animate(i):
+        img.set_data(chain.samples[i])
+        return img,
+    
+    anim = animation.FuncAnimation(
+        fig,
+        _animate, 
+        init_func=_init,
+        frames=len(chain.samples), 
+        interval=20, 
+        blit=True
+    )
+    plt.show()
+
+
 if __name__=='__main__':
-    f_path = Path('chains\\2019-07-30T12-29-53_n50000.pkl')
+    f_path = Path('chains/2019-09-18T10-19-39_n30000.pkl')
     with open(f_path, 'rb') as f:
         chain = pickle.load(f)
 
     image_path = Path('data/phantom.png')
     image = dataLoading.import_image(image_path, size=chain.size)
 
-    fig = plot_result_2d(image, chain, savefig=True)
-    fig_name = 'results_%s.pdf'%f_path.name.replace('.pkl','')
-    plt.savefig('results\\'+fig_name, papertype='a4', orientation='portrait', dpi=300)
+    animate_chain(chain)
+
+
+
+    # fig = plot_result_2d(image, chain, savefig=True)
+    # fig_name = 'results_%s.pdf'%f_path.name.replace('.pkl','')
+    # plt.savefig('results\\'+fig_name, papertype='a4', orientation='portrait', dpi=300)
