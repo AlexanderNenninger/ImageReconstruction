@@ -162,37 +162,53 @@ def MAP_Estimator(chain, image):
 def animate_chain(chain, savefig=False):
     #setup the figure and axes
     fig = plt.figure()
-    ax = plt.axes(xlim=(-.5, chain.size-.5), ylim=(-.5, chain.size-.5))
-    img = ax.imshow(chain.samples[0])
+    ax = []    
+    #Samples
+    ax.append(fig.add_subplot(2,1,1))
+    img = ax[0].imshow(chain.samples[0])
+    
+    #Beta
+    ax.append(
+        fig.add_subplot(
+            2,1,2,
+            xlim=(0, len(chain.betas)), 
+            ylim=(0,1))
+    )
+    idx = np.arange(0, len(chain.betas))
+    line, = ax[1].plot(idx[:0], chain.betas[:0])
     
     def _init():
         img.set_data(chain.samples[0])
-        return img,
+        line.set_data(idx[:0], chain.betas[:0])
+        return img, line,
     
     def _animate(i):
         img.set_data(chain.samples[i])
-        return img,
+        line.set_data(idx[:i], chain.betas[:i])
+        return img, line,
     
     anim = animation.FuncAnimation(
         fig,
         _animate, 
         init_func=_init,
         frames=len(chain.samples), 
-        interval=20, 
-        blit=True
+        blit=True,
+        interval=1
     )
+    if savefig:
+        anim.save('basic_animation.mp4', fps=30, bitrate=2000, extra_args=['-vcodec', 'libx264'])
     plt.show()
 
 
 if __name__=='__main__':
-    f_path = Path('chains/2019-09-18T10-19-39_n30000.pkl')
+    f_path = Path('chains/2019-09-18T09-24-44_n100000.pkl')
     with open(f_path, 'rb') as f:
         chain = pickle.load(f)
 
     image_path = Path('data/phantom.png')
     image = dataLoading.import_image(image_path, size=chain.size)
 
-    animate_chain(chain)
+    animate_chain(chain, savefig=False)
 
 
 
