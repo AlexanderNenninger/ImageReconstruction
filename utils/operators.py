@@ -1,6 +1,8 @@
 import numpy as np
 from skimage.transform import radon, iradon
 
+import multiprocessing
+
 from copy import deepcopy
 '''
 Define Operators. mOp is for taking measurements, CovOp is for mapping to the right function space. 
@@ -68,13 +70,29 @@ class CovOp(object):
             return self.sigma * np.dot(self.C, x)
         return self.sigma * np.tensordot(self.C, x, axes=self.ndim)
     
-    def update_tensor(self):
-        it = np.nditer(self.C, flags=['multi_index'], op_flags=['readwrite'])
+    def _calc_distances(self, C):
+        'Calculate distances of submatrices'
+        it = np.nditer(C, flags=['multi_index'], op_flags=['readwrite'])
         while not it.finished:
             idx = np.array(it.multi_index)
             d = self.dist(idx[:idx.shape[0]//2], idx[idx.shape[0]//2:])
             it[0] = self.f(d)
             it.iternext()
+        return C
+
+    def _test(self, C):
+        return C+10
+
+    def update_tensor(self):
+        'Updates Covariance Operator'   
+        #Multicore Processing
+        n_processes = multiprocessing.cpu_count()
+        Chunks = [self.C[i*self.C.shape[0]//n_processes:(i+1)*self.C.shape[0]//n_processes] for i in range(0, n_processes-1)]
+        Chunks.append(self.C[self.C.shape[0]//n_processes*(n_processes-1):])
+        with multiprocessing.Pool(n_processes+1) as p:
+            self.C = np.concatenate(
+                p.map(self._calc_distances, Chunks)
+            )      
         self.tensor_cached = True
         #missing cholesky decomposition
     
@@ -148,9 +166,9 @@ class RadonTransform(object):
 
 if __name__=='__main__':
     import matplotlib.pyplot as plt
-    size = 3
-    ndim = 1
-    depth = 3
+    size = 33
+    ndim = 2
+    depth = 1
         
     F = lambda x: np.exp(x)
     
@@ -163,10 +181,12 @@ if __name__=='__main__':
 
     xi = np.random.standard_normal((size,)*ndim)
     u = Cov(xi)
-
-    fig, ax = plt.subplots(ncols = depth)
-    for i, s in enumerate(samples):
-        im = ax[i].imshow(s)
-    #fig.colorbar(im)
+    plt.imshow(u)
     plt.show()
+
+    # fig, ax = plt.subplots(ncols = depth)
+    # for i, s in enumerate(samples):
+    #     im = ax[i].imshow(s)
+    # #fig.colorbar(im)
+    # plt.show()
     
