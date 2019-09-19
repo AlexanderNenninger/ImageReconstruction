@@ -82,9 +82,6 @@ class CovOp(object):
             it.iternext()
         return C
 
-    def _test(self, C):
-        return C+10
-
     def update_tensor(self):
         'Updates Covariance Operator'   
         #Multicore Processing
