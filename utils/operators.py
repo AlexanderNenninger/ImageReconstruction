@@ -70,11 +70,13 @@ class CovOp(object):
             return self.sigma * np.dot(self.C, x)
         return self.sigma * np.tensordot(self.C, x, axes=self.ndim)
     
-    def _calc_distances(self, C):
+    def _calc_distances(self, Chunk:tuple):
         'Calculate distances of submatrices'
+        C, offset = Chunk
         it = np.nditer(C, flags=['multi_index'], op_flags=['readwrite'])
         while not it.finished:
             idx = np.array(it.multi_index)
+            idx[0]+=offset
             d = self.dist(idx[:idx.shape[0]//2], idx[idx.shape[0]//2:])
             it[0] = self.f(d)
             it.iternext()
@@ -87,8 +89,17 @@ class CovOp(object):
         'Updates Covariance Operator'   
         #Multicore Processing
         n_processes = multiprocessing.cpu_count()
-        Chunks = [self.C[i*self.C.shape[0]//n_processes:(i+1)*self.C.shape[0]//n_processes] for i in range(0, n_processes-1)]
-        Chunks.append(self.C[self.C.shape[0]//n_processes*(n_processes-1):])
+        Chunks = [
+            (
+                self.C[i*self.C.shape[0]//n_processes:(i+1)*self.C.shape[0]//n_processes],
+                i*self.C.shape[0]//n_processes) for i in range(0, n_processes-1
+            )
+        ]
+        Chunks.append((
+                self.C[self.C.shape[0]//n_processes*(n_processes-1):],
+                self.C.shape[0]//n_processes*(n_processes-1)
+            )
+        )
         with multiprocessing.Pool(n_processes+1) as p:
             self.C = np.concatenate(
                 p.map(self._calc_distances, Chunks)
@@ -166,7 +177,7 @@ class RadonTransform(object):
 
 if __name__=='__main__':
     import matplotlib.pyplot as plt
-    size = 33
+    size = 64
     ndim = 2
     depth = 1
         
