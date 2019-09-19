@@ -239,3 +239,4 @@ dmypy.json
 .pyre/
 
 *.pkl
+*.gif
