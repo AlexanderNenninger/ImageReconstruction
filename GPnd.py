@@ -125,13 +125,13 @@ class wpCN(object):
 if __name__=='__main__':	
 
 	image_path = Path('data/phantom.png')
-	size = 10
+	size = 128
 	image = dataLoading.import_image(image_path, size=size)
 
 	ndim = image.ndim
 	shape = (size,)*ndim
 
-	C = CovOp(ndim, size, sigma=.1, ro=.05)
+	C = CovOp(ndim, size, sigma=.1, ro=.03)
 
 	T = RadonTransform(ndim, size, np.linspace(0, 180, 10))
 
@@ -144,7 +144,7 @@ if __name__=='__main__':
 
 	chain = wpCN(ndim, size, noise, C, T)
 
-	n_iter = 100000
+	n_iter = 200000
 	chain.sample(data, n_iter)
 
 	f_name = '%s_n%s.pkl'%(datetime.now().replace(microsecond=0).isoformat().replace(':','-'),str(n_iter))
