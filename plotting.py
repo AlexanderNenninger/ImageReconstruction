@@ -159,56 +159,75 @@ def MAP_Estimator(chain, image):
     errs = [chain.phi(y,data) for y in y_hat]
     return chain.samples[np.argmin(errs)], np.round(np.min(errs), 4)
 
-def animate_chain(chain, savefig=False):
+def animate_chain(chain, video_path, savefig=False, speed:int = 50):
     #setup the figure and axes
-    fig = plt.figure()
+    fig = plt.figure(figsize=(12, 9))
+    gs = fig.add_gridspec(2, 2, height_ratios=[4,2])
+    
     ax = []    
     #Samples
-    ax.append(fig.add_subplot(2,1,1))
+    ax.append(fig.add_subplot(gs[0, 0]))
     img = ax[0].imshow(chain.samples[0])
+    ax[0].set_title('Current Sample')
+    
+    #Samples mean
+    ax.append(fig.add_subplot(gs[0, 1]))
+    mean = ax[1].imshow(chain.samples[0])
+    ax[1].set_title('Mean up to Current Sample')
     
     #Beta
     ax.append(
         fig.add_subplot(
-            2,1,2,
-            xlim=(0, len(chain.betas)), 
+            gs[1, :],
+            xlim=(0, 1000), 
             ylim=(0,1))
     )
     idx = np.arange(0, len(chain.betas))
-    line, = ax[1].plot(idx[:0], chain.betas[:0])
+    line, = ax[2].plot(idx[:0], chain.betas[:0])
+    ax[2].set_title('Jump Size beta')
     
     def _init():
         img.set_data(chain.samples[0])
+        mean.set_data(chain.samples[0])
         line.set_data(idx[:0], chain.betas[:0])
-        return img, line,
+        return img, line, mean,
     
     def _animate(i):
-        img.set_data(chain.samples[i])
-        line.set_data(idx[:i], chain.betas[:i])
-        return img, line,
+        #update xlimits on graph
+        xmin, xmax = ax[2].get_xlim()
+        if i*speed >= xmax:
+            ax[2].set_xlim(xmin, 2*xmax)
+            ax[2].figure.canvas.draw()
+        
+        img.set_data(chain.samples[i*speed])
+        mean.set_data(np.mean(chain.samples[:(i*speed)+1], axis=0))
+        line.set_data(idx[:i*speed], chain.betas[:i*speed])
+        return img, line, mean,
     
     anim = animation.FuncAnimation(
         fig,
         _animate, 
         init_func=_init,
-        frames=len(chain.samples), 
+        frames=len(chain.samples)//speed, 
         blit=True,
         interval=1
     )
     if savefig:
-        anim.save('basic_animation.mp4', fps=30, bitrate=2000, extra_args=['-vcodec', 'libx264'])
-    plt.show()
+        anim.save(str(video_path.resolve()), fps=30, bitrate=4000, extra_args=['-vcodec', 'libx264'])
+    else:
+        plt.show()
 
 
 if __name__=='__main__':
-    f_path = Path('chains/2019-09-18T09-24-44_n100000.pkl')
+    f_path = Path('chains/2019-09-19T13-21-18_n200000.pkl')
     with open(f_path, 'rb') as f:
         chain = pickle.load(f)
 
     image_path = Path('data/phantom.png')
     image = dataLoading.import_image(image_path, size=chain.size)
 
-    animate_chain(chain, savefig=False)
+    video_path = Path("/".join(['results', 'animations', f_path.stem]) + ".mp4")
+    animate_chain(chain, video_path, savefig=True)
 
 
 

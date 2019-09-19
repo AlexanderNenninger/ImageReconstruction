@@ -125,17 +125,17 @@ class wpCN(object):
 if __name__=='__main__':	
 
 	image_path = Path('data/phantom.png')
-	size = 128
+	size = 48
 	image = dataLoading.import_image(image_path, size=size)
 
 	ndim = image.ndim
 	shape = (size,)*ndim
 
-	C = CovOp(ndim, size, sigma=.1, ro=.03)
+	C = CovOp(ndim, size, sigma=.1, ro=.01)
 
 	T = RadonTransform(ndim, size, np.linspace(0, 180, 10))
 
-	noise = .01
+	noise = .001
 	
 	data = T(image)
 	data += noise * np.random.standard_normal(data.shape)
