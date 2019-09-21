@@ -89,8 +89,7 @@ class CovOp(object):
         Chunks = [
             (
                 self.C[i*self.C.shape[0]//n_processes:(i+1)*self.C.shape[0]//n_processes],
-                i*self.C.shape[0]//n_processes) for i in range(0, n_processes-1
-            )
+                i*self.C.shape[0]//n_processes) for i in range(0, n_processes-1)
         ]
         Chunks.append((
                 self.C[self.C.shape[0]//n_processes*(n_processes-1):],
