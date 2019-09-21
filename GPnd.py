@@ -41,12 +41,12 @@ class wpCN(object):
 	def F(self, x):
 		return np.exp(x)
 
-	def DGP(self, x, xi):
-		u = self.C(xi[0])
-		for i in range(1, self.depth):
-			nu = self.C(xi[i])
-			u = self.L(u[i-1], nu, x)
-		return u
+	# def DGP(self, x, xi):
+	# 	u = self.C(xi[0])
+	# 	for i in range(1, self.depth):
+	# 		nu = self.C(xi[i])
+	# 		u = self.L(u[i-1], nu, x)
+	# 	return u
  
 	def phi(self, x, y):
 		return np.sum((x-y)**2) * self.dx / self.noise
@@ -135,7 +135,7 @@ if __name__=='__main__':
 
 	T = RadonTransform(ndim, size, np.linspace(0, 180, 10))
 
-	noise = .001
+	noise = .0001
 	
 	data = T(image)
 	data += noise * np.random.standard_normal(data.shape)
@@ -144,7 +144,7 @@ if __name__=='__main__':
 
 	chain = wpCN(ndim, size, noise, C, T)
 
-	n_iter = 200000
+	n_iter = 100000
 	chain.sample(data, n_iter)
 
 	f_name = '%s_n%s.pkl'%(datetime.now().replace(microsecond=0).isoformat().replace(':','-'),str(n_iter))
