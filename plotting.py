@@ -21,7 +21,7 @@ from GPnd import *
 print(mpl.matplotlib_fname())
 
 def plot_result_2d(image, chain, savefig=False):
-    
+    'Makes an A4 report page for a 2D chain'
     Cov = chain.Cov
     C = chain.dgp.C
     size = chain.size
@@ -153,6 +153,9 @@ def plot_result_2d(image, chain, savefig=False):
     return fig
 
 def MAP_Estimator(chain, image):
+    '''
+    takes a wpCN chain and an image, finds the sample, that fits the image best using the chains forward operator
+    '''
     T  = chain.T
     data = T(image)
     y_hat = [T(u) for u in chain.samples]
@@ -160,6 +163,9 @@ def MAP_Estimator(chain, image):
     return chain.samples[np.argmin(errs)], np.round(np.min(errs), 4)
 
 def animate_chain(chain, video_path, savefig=False, speed:int = 50):
+    '''Takes a 2D-wpCN chain and makes and animates its samples, along with jump size.
+    Optionally saves the animation as video
+    '''
     #setup the figure and axes
     fig = plt.figure(figsize=(12, 9))
     gs = fig.add_gridspec(2, 2, height_ratios=[4,2])
@@ -219,7 +225,7 @@ def animate_chain(chain, video_path, savefig=False, speed:int = 50):
 
 
 if __name__=='__main__':
-    f_path = Path('chains/2019-09-19T13-21-18_n200000.pkl')
+    f_path = Path('chains/2019-09-22T16-01-08_n100000.pkl')
     with open(f_path, 'rb') as f:
         chain = pickle.load(f)
 

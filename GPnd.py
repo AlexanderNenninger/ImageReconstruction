@@ -38,6 +38,8 @@ def update_beta(beta, acc_prob, target):
 	return np.clip(beta, 2**(-15), 1-2**(-15))
 
 class wpCN(object):
+	'''Class for handling all methods and parameters to recostruct a square image using MCMC with wpCN Proposals
+	'''
 	def F(self, x):
 		return np.exp(x)
 
@@ -49,9 +51,17 @@ class wpCN(object):
 	# 	return u
  
 	def phi(self, x, y):
+		'Error Function, that is minimized'
 		return np.sum((x-y)**2) * self.dx / self.noise
 
 	def __init__(self, ndim, size, noise, Covariance: CovOp , T: mDevice):
+		'''
+		ndim: number of dimensions the cube, that is reconstructed should have
+		size: number of discretization points in each direction
+		noise: relevant for reconstruction, the variance of white gaussian noise assumed in the data
+		Covariance: CovOp from utils/operators.py
+		T: Measurement Operator from utils/operators.py
+		'''		
 		self.ndim = ndim
 		self.size = size
 		self.shape = (size,)*ndim
@@ -78,6 +88,7 @@ class wpCN(object):
 		self.betas  = []
   	
 	def infer(self, data):
+		'produce one sample of a markov chain'
 		#base layer
 		xi_hat = [np.sqrt(1 - self.beta**2) * self.xi[i] + self.beta * np.random.standard_normal(self.shape) for i in range(self.depth)]
 		u_hat = self.dgp.sample(xi_hat)
