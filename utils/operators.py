@@ -7,6 +7,23 @@ from copy import deepcopy
 '''
 Define Operators. mOp is for taking measurements, CovOp is for mapping to the right function space. 
 '''
+#multiprocessing lambda functions
+_func = None
+
+def worker_init(func):
+  global _func
+  _func = func
+  
+
+def worker(x):
+  return _func(x)
+
+
+def xmap(func, iterable, processes=None):
+  with multiprocessing.Pool(processes, initializer=worker_init, initargs=(func,)) as p:
+    return p.map(worker, iterable)
+###################
+
 class mOp(object):
     'F([0,1]^ndim) -> R'
     def f(self, x):
@@ -85,7 +102,7 @@ class CovOp(object):
     def update_tensor(self):
         'Updates Covariance Operator'   
         #Multicore Processing
-        n_processes = multiprocessing.cpu_count()
+        n_processes = min(multiprocessing.cpu_count(), self.size-1)
         Chunks = [
             (
                 self.C[i*self.C.shape[0]//n_processes:(i+1)*self.C.shape[0]//n_processes],
@@ -96,10 +113,10 @@ class CovOp(object):
                 self.C.shape[0]//n_processes*(n_processes-1)
             )
         )
-        with multiprocessing.Pool(n_processes+1) as p:
-            self.C = np.concatenate(
-                p.map(self._calc_distances, Chunks)
-            )      
+        
+        self.C = np.concatenate(
+            xmap(self._calc_distances, Chunks, processes=n_processes+1)
+        )      
         self.tensor_cached = True
         #missing cholesky decomposition
     
@@ -188,8 +205,7 @@ if __name__=='__main__':
 
     xi = np.random.standard_normal((size,)*ndim)
     u = Cov(xi)
-    plt.imshow(u)
-    plt.show()
+    print(u)
 
     # fig, ax = plt.subplots(ncols = depth)
     # for i, s in enumerate(samples):
