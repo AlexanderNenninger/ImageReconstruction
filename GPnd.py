@@ -125,7 +125,7 @@ class wpCN(object):
 if __name__=='__main__':	
 
 	image_path = Path('data/head.png')
-	size = 32
+	size = 48
 	image = dataLoading.import_image(image_path, size=size)
 
 	ndim = image.ndim
