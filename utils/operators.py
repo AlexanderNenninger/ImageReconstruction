@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.optimize import root_scalar
 from skimage.transform import radon, iradon
 
 import multiprocessing
@@ -14,10 +15,8 @@ def worker_init(func):
   global _func
   _func = func
   
-
 def worker(x):
   return _func(x)
-
 
 def xmap(func, iterable, processes=None):
   with multiprocessing.Pool(processes, initializer=worker_init, initargs=(func,)) as p:
@@ -65,7 +64,7 @@ class CovOp(object):
         return np.exp(-r/self.ro)#(1 + np.sqrt(3)*r / self.ro) * np.exp(-np.sqrt(3) * r / self.ro)
     
     def dist(self, x,y):
-        return np.sum((x-y)**2)
+        return np.sum((x-y)**2, axis=0)
     
     def __init__(self, ndim, size, sigma=1, ro=1):
         self.tensor_cached = False
@@ -73,10 +72,11 @@ class CovOp(object):
         self.ndim = ndim
         self.size = size
         self.shape = (size,)*ndim*2
-        self.C = np.zeros(self.shape)
-        self.Inv = np.zeros(self.shape)
+        self.xx = (np.arange(0, self.size, dtype=np.int16),) * (self.ndim**2)
+        self.idx = np.array(np.meshgrid(*self.xx))
         self.ro = ro * size
-        self.sigma = sigma      
+        self.sigma = sigma
+
 	
     def __call__(self, x):
         if not self.tensor_cached:
@@ -86,39 +86,13 @@ class CovOp(object):
         elif self.ndim == 1:
             return self.sigma * np.dot(self.C, x)
         return self.sigma * np.tensordot(self.C, x, axes=self.ndim)
-    
-    def _calc_distances(self, Chunk:tuple):
-        'Calculate distances of submatrices'
-        C, offset = Chunk
-        it = np.nditer(C, flags=['multi_index'], op_flags=['readwrite'])
-        while not it.finished:
-            idx = np.array(it.multi_index)
-            idx[0]+=offset
-            d = self.dist(idx[:idx.shape[0]//2], idx[idx.shape[0]//2:])
-            it[0] = self.f(d)
-            it.iternext()
-        return C
+
 
     def update_tensor(self):
         'Updates Covariance Operator'   
-        #Multicore Processing
-        n_processes = min(multiprocessing.cpu_count(), self.size-1)
-        Chunks = [
-            (
-                self.C[i*self.C.shape[0]//n_processes:(i+1)*self.C.shape[0]//n_processes],
-                i*self.C.shape[0]//n_processes) for i in range(0, n_processes-1)
-        ]
-        Chunks.append((
-                self.C[self.C.shape[0]//n_processes*(n_processes-1):],
-                self.C.shape[0]//n_processes*(n_processes-1)
-            )
-        )
-        
-        self.C = np.concatenate(
-            xmap(self._calc_distances, Chunks, processes=n_processes+1)
-        )      
-        self.tensor_cached = True
-        #missing cholesky decomposition
+        self.x = np.array(self.idx[:len(self.idx)//2])
+        self.y = np.array(self.idx[len(self.idx)//2:])
+        self.C = self.f(self.dist(self.x, self.y))
     
     def update_inverse(self):
         if self.ndim==1:
@@ -139,7 +113,7 @@ class CovOp(object):
     def set_f(self ,f):
         self.inverse_cached = False
         self.tensor_cached = False
-        self.f = f
+        self.f = np.fromfunction(f)
         
     def set_dist(self, dist):
         self.inverse_cached = False
@@ -205,7 +179,8 @@ if __name__=='__main__':
 
     xi = np.random.standard_normal((size,)*ndim)
     u = Cov(xi)
-    print(u)
+    plt.imshow(u)
+    plt.show()
 
     # fig, ax = plt.subplots(ncols = depth)
     # for i, s in enumerate(samples):
